@@ -1,17 +1,17 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-SOURCE = Channel.fromPath("${params.source}/*.pdb").map {[it.name, it]}
-TARGET = Channel.fromPath("${params.target}/*.pdb").map {[it.name, it]}
+Partner1 = Channel.fromPath("${params.partner1}/*.pdb")
+Partner2 = Channel.fromPath("${params.partner2}/*.pdb")
 
 process GEODOCK {
   publishDir "${params.output}", mode: 'copy'
 
   input:
-  tuple val(source_id), path(source_file, stageAs: 'source/*'), val(target_id), path(target_file, stageAs: 'target/*')
+  tuple path(partner1, stageAs: 'partner1/*'), path(partner2, stageAs: 'partner2/*')
 
   output:
-  path "${source_id}__${target_id}.pdb"
+  path "${partner1.simpleName}._.${partner2.simpleName}.pdb"
 
   script:
   """
@@ -22,9 +22,9 @@ process GEODOCK {
   ckpt_file = "/GeoDock-main/geodock/weights/dips_0.3.ckpt"
   geodock = GeoDockRunner(ckpt_file=ckpt_file)
   pred = geodock.dock(
-      partner1="${source_file}",
-      partner2="${target_file}",
-      out_name="${source_id}__${target_id}",
+      partner1="${partner1}",
+      partner2="${partner2}",
+      out_name="${partner1.simpleName}._.${partner2.simpleName}",
       do_refine=True,
       use_openmm=True,
   )
@@ -32,5 +32,7 @@ process GEODOCK {
 }
 
 workflow {
-  GEODOCK(SOURCE.combine(TARGET))
+  Partner1 |
+    combine(Partner2) |
+    GEODOCK
 }
