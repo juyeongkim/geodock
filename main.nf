@@ -19,6 +19,7 @@ process GEODOCK {
   import torch
   from geodock.GeoDockRunner import GeoDockRunner
   torch.cuda.empty_cache()
+  torch.set_num_threads(${task.cpus})
   ckpt_file = "/GeoDock-main/geodock/weights/dips_0.3.ckpt"
   geodock = GeoDockRunner(ckpt_file=ckpt_file)
   pred = geodock.dock(
